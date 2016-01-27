@@ -6,6 +6,18 @@ import (
 	"github.com/pivotal-cf/brokerapi"
 )
 
+var ipAddress string
+
+//DatabaseIDs ...
+type DatabaseIDs [15]string
+
+//Credentials ...
+type Credentials struct {
+	Host     string
+	Port     int
+	Database int
+}
+
 //RedisDatabase ...
 type RedisDatabase struct {
 	index              int
@@ -14,11 +26,12 @@ type RedisDatabase struct {
 
 //RedisService ...
 type RedisService struct {
-	databases [16]RedisDatabase
+	databases [15]RedisDatabase
 }
 
 //New ...
-func New(names [16]string) (broker RedisService) {
+func New(names DatabaseIDs, ip string) (broker RedisService) {
+	ipAddress = ip
 	for i := range broker.databases {
 		broker.databases[i] = RedisDatabase{
 			i,
@@ -85,20 +98,29 @@ func (broker *RedisService) Deprovision(
 		err             error
 	)
 
-	asyncFalse := brokerapi.IsAsync(false)
-
 	if indexOfDatabase, err = broker.indexOfDatabase(instanceID); err != nil {
-		return asyncFalse, err
+		return false, err
 	}
 
 	database := &broker.databases[indexOfDatabase]
 	database.assignedInstanceID = ""
-	return asyncFalse, err
+	return false, err
 }
 
 //Bind ...
-func (*RedisService) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (service brokerapi.Binding, err error) {
-	return
+func (broker *RedisService) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
+	db, err := broker.databaseID(instanceID)
+	if err != nil {
+		return brokerapi.Binding{}, err
+	}
+
+	return brokerapi.Binding{
+		Credentials: Credentials{
+			Host:     ipAddress,
+			Port:     6379,
+			Database: db,
+		},
+	}, nil
 }
 
 //Unbind ...
@@ -109,6 +131,11 @@ func (*RedisService) Unbind(instanceID, bindingID string, details brokerapi.Unbi
 //Update ...
 func (*RedisService) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (service brokerapi.IsAsync, err error) {
 	return
+}
+
+func (broker *RedisService) databaseID(assignedInstanceID string) (int, error) {
+	dbindex, err := broker.indexOfDatabase(assignedInstanceID)
+	return dbindex + 1, err
 }
 
 func (broker *RedisService) indexOfDatabase(assignedInstanceID string) (int, error) {

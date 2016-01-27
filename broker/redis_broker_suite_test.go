@@ -17,7 +17,7 @@ var _ = Describe(".RedisService", func() {
 	)
 
 	JustBeforeEach(func() {
-		redisBroker = broker.New([16]string{})
+		redisBroker = broker.New(broker.DatabaseIDs{}, "0.0.0.0")
 	})
 
 	Describe(".Services", func() {
@@ -40,11 +40,11 @@ var _ = Describe(".RedisService", func() {
 
 		Context("if there are no databases available", func() {
 			JustBeforeEach(func() {
-				var fullArray [16]string
+				var fullArray broker.DatabaseIDs
 				for i := range fullArray {
 					fullArray[i] = strconv.Itoa(i)
 				}
-				redisBroker = broker.New(fullArray)
+				redisBroker = broker.New(fullArray, "0.0.0.0")
 			})
 
 			It("should return an error if it can't provision a redis db", func() {
@@ -72,7 +72,7 @@ var _ = Describe(".RedisService", func() {
 
 		Context("given a service has been provisioned", func() {
 			JustBeforeEach(func() {
-				redisBroker = broker.New([16]string{"Pikachu"})
+				redisBroker = broker.New(broker.DatabaseIDs{"Pikachu"}, "0.0.0.0")
 			})
 
 			It("should return no error", func() {
@@ -85,11 +85,34 @@ var _ = Describe(".RedisService", func() {
 			})
 		})
 	})
+
+	Describe(".Bind", func() {
+		Context("given a service has been provisioned", func() {
+			JustBeforeEach(func() {
+				redisBroker.Provision("Pikachu", brokerapi.ProvisionDetails{}, false)
+			})
+
+			It("should return no errors when sucessfully bound", func() {
+				_, err := redisBroker.Bind("Pikachu", "test", brokerapi.BindDetails{})
+				Expect(err).To(BeNil())
+			})
+
+			It("should return a binding when successfully bound", func() {
+				binding, err := redisBroker.Bind("Pikachu", "test", brokerapi.BindDetails{})
+				Expect(err).To(BeNil())
+				if credentials, ok := binding.Credentials.(broker.Credentials); ok {
+					Expect(credentials.Database).To(Equal(1))
+				} else {
+					Fail("Could not cast to Credentials object.")
+				}
+			})
+		})
+	})
 })
 
 var _ = Describe("Functional test", func() {
 	It("should provision and then deprovision", func() {
-		redisBroker := broker.New([16]string{})
+		redisBroker := broker.New(broker.DatabaseIDs{}, "0.0.0.0")
 
 		_, err := redisBroker.Provision(
 			"Pikachu",
