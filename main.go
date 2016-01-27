@@ -24,7 +24,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	serviceBroker := broker.New([16]string{}, ipAddress)
+	serviceBroker := broker.New(broker.DatabaseIDs{}, ipAddress)
 	logger := lager.NewLogger("redis-service-broker")
 	credentials := brokerapi.BrokerCredentials{
 		Username: "admin",
