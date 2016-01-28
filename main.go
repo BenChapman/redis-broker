@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,18 +11,8 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-var ipAddress string
-
-func init() {
-	flag.StringVar(&ipAddress, "ip", "", "Exposed IP address of the local machine")
-	flag.Parse()
-}
-
 func main() {
-	if ipAddress == "" {
-		fmt.Println("IP address must be set")
-		os.Exit(1)
-	}
+	ipAddress := os.Getenv("REDIS_IP")
 
 	serviceBroker := broker.New(broker.DatabaseIDs{}, ipAddress)
 	logger := lager.NewLogger("redis-service-broker")
@@ -33,7 +22,7 @@ func main() {
 	}
 
 	brokerAPI := brokerapi.New(&serviceBroker, logger, credentials)
-	fmt.Println("Listening on port " + os.Getenv("PORT"))
+	fmt.Println("Listening on port " + os.Getenv("PORT") + " with IP " + ipAddress)
 	http.Handle("/", brokerAPI)
 	if err := http.ListenAndServe(":"+os.Getenv("PORT"), nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
