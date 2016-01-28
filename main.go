@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -32,7 +33,9 @@ func main() {
 	}
 
 	brokerAPI := brokerapi.New(&serviceBroker, logger, credentials)
-	fmt.Println("Listening on port 3000")
+	fmt.Println("Listening on port " + os.Getenv("PORT"))
 	http.Handle("/", brokerAPI)
-	http.ListenAndServe(":3000", nil)
+	if err := http.ListenAndServe(":"+os.Getenv("PORT"), nil); err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
 }

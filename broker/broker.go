@@ -47,7 +47,7 @@ func (*RedisService) Services() (service []brokerapi.Service) {
 		brokerapi.Service{
 			ID:            "29e7fc30-5941-44c9-8062-a8ec169f0202",
 			Name:          "Shared Redis",
-			Description:   "",
+			Description:   "This is a shared redis. This description sucks",
 			Bindable:      true,
 			Tags:          []string{"pivotal", "cf"},
 			PlanUpdatable: false,
@@ -55,7 +55,7 @@ func (*RedisService) Services() (service []brokerapi.Service) {
 				brokerapi.ServicePlan{
 					ID:          "be6701cc-43da-401d-8bad-06220108e4d9",
 					Name:        "Basic",
-					Description: "",
+					Description: "This is a shared redis. This description sucks",
 				},
 			},
 		},
